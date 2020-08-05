@@ -4,8 +4,7 @@ pipeline {
 parameters {
     choice choices: ['server1','server2','server3'],
     description:  'Servidor de origen',
-    name: 'source_server',
-    required: true
+    name: 'source_server'
 }
     stages {
         stage('Hello') {
