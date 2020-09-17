@@ -1,0 +1,89 @@
+jenkins:
+  agentProtocols:
+  - "JNLP4-connect"
+  - "Ping"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: false
+  disableRememberMe: false
+  mode: NORMAL
+  numExecutors: 2
+  primaryView:
+    all:
+      name: "all"
+  quietPeriod: 5
+  scmCheckoutRetryCount: 0
+  securityRealm:
+    local:
+      allowsSignup: false
+      enableCaptcha: false
+      users:
+      - id: "admin"
+        password: "P4$$w0rd"
+  slaveAgentPort: 50000
+  views:
+  - all:
+      name: "all"
+tool:
+  git:
+    installations:
+    - home: "git"
+      name: "Default"
+  jdk: 
+    installations:
+    - home: "/docker-java-home"
+      name: "jdk"
+  maven:
+    installations:
+    - name: "maven"
+      properties:
+      - installSource:
+          installers:
+          - maven:
+              id: "3.5.4"
+jobs:
+  - script: >
+      multibranchPipelineJob('image-jenkins') {
+        branchSources {
+          github {
+            // The id option in the Git and GitHub branch source contexts is now mandatory (JENKINS-43693).
+            id('12312313') // IMPORTANT: use a constant and unique identifier
+            scanCredentialsId('github')
+            repoOwner('my-org')
+            repository('my-repository')
+            apiUri('http://my-github-server/api/v3') // Optional, needed for private github enterprise servers
+          }
+        }
+        orphanedItemStrategy {
+          discardOldItems {
+            numToKeep(1)
+          }
+        }
+        triggers {
+          periodic(5)
+        }
+      }
+
+  - script: >
+      folder('testjobs')
+  - script: >
+      pipelineJob('testjobs/default-agent') {
+        definition {
+          cps {
+            script("""\
+              pipeline {
+                agent any
+                stages {
+                  stage ('test') {
+                    steps {
+                      echo "hello"
+                    }
+                  }
+                }
+              }""".stripIndent())
+          }
+        }
+      }
